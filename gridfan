@@ -4,7 +4,8 @@
 
 VERSION=1.5
 MYNAME=$(basename $0)
-GRID_DEV=/dev/GridPlus0 # Default device file if not set with -d.
+GRID_DEV=/dev/cuaU0 # Default device file if not set with -d.
+#SCRIPT_DEBUG=1
 
 #--
 
@@ -83,9 +84,9 @@ f_setup_dev() {
 		echodebug "${FUNCNAME[0]}: Already set up stty parameters. Not doing it again."
 		return 0
 	fi
-	STTY_PARAMS="4800 raw -echo -echoe -echok"
+	STTY_PARAMS="speed 4800 raw -echo -echoe -echok"
 	echodebug "${FUNCNAME[0]}: stty setting parameters to the device: \"$STTY_PARAMS\"."
-	stty -F $GRID_DEV $STTY_PARAMS &> /dev/null ; X_STTY=$?
+	stty -f $GRID_DEV.init $STTY_PARAMS &> /dev/null ; X_STTY=$?
 	SEEN_SETUP_STTY=1
 	if [[ ! "$X_STTY" == 0 ]] ; then
 		echoerr "ERROR: stty returned code $X_STTY. Unable to set up the serial device file."
@@ -125,7 +126,7 @@ f_xmit() {
 	#
 	# We must wait for hexdump to spawn and have opened stdout on the GRID_DEV.
 	# I figure the best way to verify that lsof has opened the device is to use lsof, but this is slow.
-	until ( lsof -p $PID_HEXDUMP | egrep -o "$(readlink -f $GRID_DEV)$" &> /dev/null ) ; do
+	until ( lsof -p $PID_HEXDUMP 2>/dev/null | egrep -o "$(readlink -f $GRID_DEV)$" &> /dev/null ) ; do
 		echodebug "${FUNCNAME[0]}: Waiting for hexdump to spawn. PID_HEXDUMP=$PID_HEXDUMP"
 		sleep 0.01
 	done
